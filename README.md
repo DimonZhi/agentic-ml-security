@@ -13,8 +13,10 @@ knowledge/
   TEMPLATE.md                 шаблон статьи
   articles/                   все карточки в одной папке
     cbr-ai-security.md
+    nvidia-code-execution-agentic-risks.md
     owasp-agentic-top-10-2026.md
     owasp-llm-top-10-2026.md
+  files/                      локальные копии оригиналов, на них ссылаются карточки
 ```
 
 Каждая статья хранится один раз. Для поиска и связей используются теги и ссылки.
