@@ -10,6 +10,8 @@ AGENTS.md                     правила для агента
 PROJECT.md                    описание проекта и задачи исследования
 context/
   brainstorm.md               оцифрованный брейншторм команды
+ideas/                        личные предложения участников, ещё не согласованные командой
+  dima-attacks.md
 research/
   TEMPLATE.md                 шаблон research-карточки
   <тема>.md                   research-карточки участников
