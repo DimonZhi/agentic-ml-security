@@ -11,7 +11,7 @@ PROJECT.md                    описание проекта и задачи и
 context/
   brainstorm.md               оцифрованный брейншторм команды
 ideas/                        личные предложения участников, ещё не согласованные командой
-  dima-attacks.md
+  attacks.md
 research/
   TEMPLATE.md                 шаблон research-карточки
   <тема>.md                   research-карточки участников
