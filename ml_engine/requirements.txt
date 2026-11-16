@@ -1,0 +1,9 @@
+# Зависимости движка на хосте. AutoGluon здесь не нужен: он живёт только в образе
+# песочницы (sandbox/requirements.lock), pickle на хосте не загружается.
+mlflow==3.18.0
+pandas>=2.2
+pyarrow>=16
+scikit-learn>=1.4
+pyyaml>=6
+openai==3.51.0      # только для agent/ds_agent.py (OpenAI-совместимый API: OpenRouter, шлюз)
+openpyxl==3.1.5     # только для scripts/make_telco.py (чтение xlsx)

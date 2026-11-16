@@ -1,0 +1,32 @@
+# Постановка задачи. Пишет DS-человек, агент её только читает.
+# Данные готовит: python scripts/make_telco.py --xlsx <путь к Telco_customer_churn.xlsx>
+# (скрипт сам впишет train_sha256 ниже).
+id: telco-churn-001
+description: >
+  Отток клиентов телеком-оператора: вероятность, что клиент уйдёт (churn=1).
+  Модель для ранжирования клиентов под удерживающие предложения, основная метрика ROC-AUC.
+type: binary
+data:
+  train: data/telco_train.parquet
+  train_sha256: 6dbeda3f991eb8d1db1b0dacdfc877b1bdea882597cbba9e0a3ae1d950088e2c
+  label: churn
+  positive_class: 1
+features:
+  # Обязательные запреты, агент может только добавить:
+  #   churn_score, churn_reason, cltv — посчитаны после факта оттока или по нему (утечка);
+  #   customer_id — идентификатор; gender — защищённый признак.
+  forbidden_columns: [churn_score, churn_reason, cltv, customer_id, gender]
+metric:
+  eval_metric: roc_auc
+limits:
+  max_time_limit_sec: 600
+  allowed_families: [GBM, CAT, XGB]
+gates:                       # пороги задаёт человек, агент их не меняет
+  max_holdout_evaluations: 5
+  min_holdout_roc_auc: 0.80
+  baseline_run_id: null
+  min_gain_over_baseline: 0.0
+  max_val_holdout_gap: 0.05  # 1409 строк в отложенной выборке, шум меньше, чем у credit-g
+  max_single_feature_auc: 0.90
+mlflow:
+  experiment: telco-churn

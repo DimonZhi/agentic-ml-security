@@ -1,0 +1,48 @@
+# Политика платформы ML Engine. Пишет владелец платформы, не DS-агент и не заказчик.
+# Агент читает её через describe_task, но изменить не может: любое предложение
+# конфига проверяется по этим границам до аппрува человеком.
+version: 1
+
+problem_types: [binary]              # пока только бинарная классификация
+metrics:
+  binary: [roc_auc]
+
+# Колонки, похожие на защищённые признаки, обязаны быть в forbidden_columns.
+# Сравнение по имени колонки (snake_case), регулярные выражения.
+protected_column_patterns:
+  - gender
+  - '(^|_)sex($|_)'
+  - race
+  - ethnic
+  - religio
+  - nationalit
+  - marital
+  - personal_status
+  - foreign_worker
+  - citizenship
+
+# Колонка, которая сама по себе почти угадывает таргет (max(AUC, 1-AUC) на train),
+# не может войти в план фичей: это почти всегда утечка (копия таргета, скор,
+# причина оттока и т. п.). Агент обязан её запретить.
+max_single_feature_auc: 0.90
+
+automl:
+  allowed_families: [GBM, CAT, XGB]
+  max_time_limit_sec: 1800
+  num_bag_folds: [0, 3, 5, 8]        # 0 = без бэггинга
+  max_num_stack_levels: 2
+  allowed_presets: [medium_quality]
+
+# Границы для порогов гейтов, которые предлагает агент
+gates:
+  max_holdout_evaluations: {min: 1, max: 5}
+  min_holdout_roc_auc: {min: 0.55, max: 0.99}
+  max_val_holdout_gap: {min: 0.0, max: 0.10}
+  max_single_feature_auc: {min: 0.5, max: 0.90}
+  min_gain_over_baseline: {min: 0.0, max: 0.2}
+
+intake:
+  holdout_fraction: 0.2              # отложенную выборку движок отрезает сразу, до агента
+  seed: 7
+  min_rows: 500
+  max_ticket_chars: 5000

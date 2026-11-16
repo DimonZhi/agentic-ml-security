@@ -1,0 +1,61 @@
+# Конфиг задачи. Предлагает DS-агент, утверждает DS-человек:
+#   python -m engine.approve configs/credit_g.yaml --by <кто>
+# Обучение и оценка работают только с утверждённой копией по её sha256
+# (spec, раздел 5). Любая правка этого файла даёт новый хэш и требует нового аппрува.
+task:
+  id: credit-g-001
+  type: binary
+data:
+  train: data/train.parquet
+  train_sha256: ca3393e3f031c0aebd6b2876ac72c7d4eac132eb5aa837437630a5defa05b359
+  label: target            # 1 = плохой заёмщик
+  positive_class: 1
+split:
+  val_fraction: 0.2
+  seed: 42
+features:
+  forbidden_columns: [personal_status, foreign_worker]
+  # План фичей: inputs = исходные колонки, outputs = признаки для модели.
+  # Группа без outputs подаёт inputs в модель как есть. Песочница видит только
+  # колонки из inputs; движок проверяет, что каждый признак модели есть в outputs
+  # и посчитан только из inputs своей группы (engine/feature_plan.py).
+  plan:
+    - name: numeric_raw
+      meaning: числовые поля заявки как есть
+      inputs: [duration, credit_amount, installment_commitment, residence_since, age,
+               existing_credits, num_dependents]
+    - name: categorical_raw
+      meaning: категориальные поля заявки как есть
+      inputs: [checking_status, credit_history, purpose, savings_status, employment,
+               other_parties, property_magnitude, other_payment_plans, housing, job, own_telephone]
+    - name: payment_burden
+      meaning: сумма в месяц и платёжная нагрузка
+      inputs: [credit_amount, duration, installment_commitment]
+      outputs: [credit_per_month, installment_burden]
+    - name: age_group
+      meaning: возрастная группа
+      inputs: [age]
+      outputs: [age_bucket]
+metric:
+  eval_metric: roc_auc
+  report: [roc_auc, gini, pr_auc]
+automl:
+  engine: autogluon
+  presets: medium_quality
+  hyperparameters:          # семейства моделей AutoGluon; пустой словарь = параметры по умолчанию
+    GBM: {}
+    CAT: {}
+    XGB: {}
+  num_bag_folds: 0
+  num_stack_levels: 0
+  time_limit_sec: 120
+  seed: 42
+gates:
+  max_holdout_evaluations: 5      # оценок на отложенной выборке на одну версию конфига (explore)
+  min_holdout_roc_auc: 0.70
+  baseline_run_id: null           # run с verdict=passed, который надо обогнать
+  min_gain_over_baseline: 0.0
+  max_val_holdout_gap: 0.10       # на 200 строках шум большой; на реальных данных порог уже
+  max_single_feature_auc: 0.90    # признак, который сам по себе почти угадывает таргет, = подозрение на утечку
+mlflow:
+  experiment: credit-g

@@ -1,0 +1,15 @@
+id: churn-002
+source: intake
+ticket: tickets/churn-002.md
+requested_by: crm
+created_at: '2026-11-16T13:48:42+00:00'
+data:
+  train: data/churn-002/train.parquet
+  train_sha256: cea94513699e59fecae275b93fba995eec6e053cfcf4769c53e7137428c6a7d1
+  original_file: Telco_customer_churn.xlsx
+  dropped_constant_columns:
+  - count
+  - country
+  - state
+mlflow:
+  experiment: churn-002

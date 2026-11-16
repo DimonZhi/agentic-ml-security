@@ -1,0 +1,13 @@
+data/
+holdout/
+mlruns/
+mlartifacts/
+AutogluonModels/
+work/
+__pycache__/
+approvals/
+proposals/
+workspaces/
+mlflow*.db
+.env
+tickets/
