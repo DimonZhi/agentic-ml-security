@@ -50,7 +50,7 @@ def _s(x) -> str:
 
 def _task(task_id: str) -> dict:
     for f in TASKS.glob("*.yaml"):
-        t = yaml.safe_load(f.read_text())
+        t = yaml.safe_load(f.read_text(encoding="utf-8"))
         if t.get("id") == task_id:
             return t
     raise AgentError(f"задача {task_id!r} не найдена")
@@ -81,7 +81,7 @@ def _workspace(task_id: str) -> Path:
         ws.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(REFERENCE_CODE, ws, ignore=shutil.ignore_patterns("__pycache__"))
         if _is_intake(_task(task_id)):   # эталонный features.py написан под credit-g
-            (ws / "features.py").write_text(PASSTHROUGH_FEATURES)
+            (ws / "features.py").write_text(PASSTHROUGH_FEATURES, encoding="utf-8")
     return ws
 
 
@@ -111,7 +111,7 @@ def describe_task(task_id: str) -> dict:
     cols = pd.read_parquet(t["data"]["train"]).dtypes
     pol = policy.load()
     if _is_intake(t):
-        ticket = Path(t["ticket"]).read_text()[:pol["intake"]["max_ticket_chars"]]
+        ticket = Path(t["ticket"]).read_text(encoding="utf-8")[:pol["intake"]["max_ticket_chars"]]
         return {
             "task_id": t["id"],
             "source": "intake",
@@ -252,7 +252,7 @@ def propose_config(task_id: str, config_yaml: str, rationale: str) -> dict:
     sha = sha256_bytes(data)
     PROPOSALS.mkdir(exist_ok=True)
     (PROPOSALS / f"{sha}.yaml").write_bytes(data)
-    (PROPOSALS / f"{sha}.rationale.md").write_text(_review_sheet(t, cfg, sha, rationale))
+    (PROPOSALS / f"{sha}.rationale.md").write_text(_review_sheet(t, cfg, sha, rationale), encoding="utf-8")
     return {"status": "pending_approval", "config_sha256": sha,
             "next": f"человек утверждает: python -m engine.approve proposals/{sha}.yaml --by <кто>"}
 
@@ -262,7 +262,7 @@ def _review_sheet(t: dict, cfg: dict, sha: str, rationale: str) -> str:
     f = cfg["features"]
     lines = [f"# Предложение конфига {sha}", "", f"Задача: {t['id']} ({'тикет заказчика' if _is_intake(t) else 'постановка DS'})"]
     if _is_intake(t):
-        lines += ["", "## Тикет заказчика", "", Path(t["ticket"]).read_text()[:5000]]
+        lines += ["", "## Тикет заказчика", "", Path(t["ticket"]).read_text(encoding="utf-8")[:5000]]
     lines += ["", "## Что утверждается", "",
               f"- таргет: `{cfg['data']['label']}`, положительный класс `{cfg['data']['positive_class']}`, "
               f"тип `{cfg['task']['type']}`, метрика `{cfg['metric']['eval_metric']}`",
@@ -381,7 +381,7 @@ def config_status(config_sha256: str) -> dict:
 def read_config(config_sha256: str) -> dict:
     for f in (STORE / f"{config_sha256}.yaml", PROPOSALS / f"{config_sha256}.yaml"):
         if f.exists():
-            return {"config_sha256": config_sha256, "config_yaml": f.read_text()}
+            return {"config_sha256": config_sha256, "config_yaml": f.read_text(encoding="utf-8")}
     raise AgentError("конфиг не найден")
 
 
@@ -396,7 +396,7 @@ def read_code(task_id: str, filename: str) -> dict:
     f = _code_path(task_id, filename)
     if not f.exists():
         raise AgentError(f"файла {filename} нет")
-    return {"filename": filename, "content": f.read_text()}
+    return {"filename": filename, "content": f.read_text(encoding="utf-8")}
 
 
 def write_code(task_id: str, filename: str, content: str) -> dict:
@@ -407,7 +407,7 @@ def write_code(task_id: str, filename: str, content: str) -> dict:
         compile(content, filename, "exec")
     except SyntaxError as e:
         raise AgentError(f"синтаксическая ошибка: {e}")
-    f.write_text(content)
+    f.write_text(content, encoding="utf-8")
     return {"filename": filename, "bytes": len(content.encode()),
             "sha256": hashlib.sha256(content.encode()).hexdigest()}
 

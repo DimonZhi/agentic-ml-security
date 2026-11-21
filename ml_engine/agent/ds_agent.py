@@ -114,7 +114,7 @@ def load_dotenv(path: str = ".env") -> None:
     f = Path(path)
     if not f.is_file():
         return
-    for line in f.read_text().splitlines():
+    for line in f.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -155,7 +155,7 @@ def run(task_id: str, resume: bool = False, client=None, model: str | None = Non
     model = model or os.environ.get("MODEL", DEFAULT_MODEL)
     path = _session_path(task_id)
     if resume and path.exists():
-        messages = json.loads(path.read_text())
+        messages = json.loads(path.read_text(encoding="utf-8"))
         statuses = [agent_api.config_status(s) for s in _pending(messages)]
         messages.append({"role": "user", "content":
                          "Статусы предложенных конфигов: " + json.dumps(statuses, ensure_ascii=False) +
@@ -205,7 +205,7 @@ def run(task_id: str, resume: bool = False, client=None, model: str | None = Non
             break
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(messages, ensure_ascii=False, indent=1))
+    path.write_text(json.dumps(messages, ensure_ascii=False, indent=1), encoding="utf-8")
     final = next((m["content"] for m in reversed(messages) if m["role"] == "assistant" and m["content"]), "")
     return {"stop_reason": stop_reason, "pending_configs": _pending(messages), "final": final,
             "session": str(path)}

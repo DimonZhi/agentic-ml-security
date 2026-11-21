@@ -34,7 +34,7 @@ def main() -> None:
     tr, ho = Path("data/train.parquet"), Path("holdout/holdout.parquet")
     train.reset_index(drop=True).to_parquet(tr, index=False)
     holdout.reset_index(drop=True).to_parquet(ho, index=False)
-    (Path("holdout") / "holdout.sha256").write_text(sha256(ho) + "\n")
+    (Path("holdout") / "holdout.sha256").write_text(sha256(ho) + "\n", encoding="utf-8")
 
     print(f"train   {len(train):5d} строк  sha256={sha256(tr)}")
     print(f"holdout {len(holdout):5d} строк  sha256={sha256(ho)}")

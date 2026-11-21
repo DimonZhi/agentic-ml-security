@@ -64,7 +64,7 @@ def inspect(cfg: dict) -> None:
                    for name, m in info["model_info"].items()},
         "default_hyperparameters": defaults,
     }
-    Path("/out/info.json").write_text(json.dumps(summary, default=str))
+    Path("/out/info.json").write_text(json.dumps(summary, default=str), encoding="utf-8")
 
 
 def predict(cfg: dict) -> None:
@@ -75,7 +75,7 @@ def predict(cfg: dict) -> None:
 
     df = build_features(pd.read_parquet("/data/holdout_features.parquet"), cfg)
     proba = predictor.predict_proba(df)[cfg["data"]["positive_class"]]
-    Path("/out/proba.json").write_text(json.dumps([float(x) for x in proba]))
+    Path("/out/proba.json").write_text(json.dumps([float(x) for x in proba]), encoding="utf-8")
     df.reset_index(drop=True).to_parquet("/out/features.parquet", index=False)
 
 
@@ -123,9 +123,9 @@ def lineage(cfg: dict) -> None:
             if f not in out or not _same(base[f], out[f]):
                 deps[f].append(col)
     Path("/out/lineage.json").write_text(json.dumps(
-        {"outputs": outputs, "deps": deps, "nondeterministic": nondet, "failed_on": failed}))
+        {"outputs": outputs, "deps": deps, "nondeterministic": nondet, "failed_on": failed}), encoding="utf-8")
 
 
 if __name__ == "__main__":
-    config = yaml.safe_load(Path("/engine/config.yaml").read_text())
+    config = yaml.safe_load(Path("/engine/config.yaml").read_text(encoding="utf-8"))
     {"inspect": inspect, "predict": predict, "lineage": lineage}[sys.argv[1]](config)

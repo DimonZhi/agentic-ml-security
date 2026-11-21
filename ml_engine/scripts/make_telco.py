@@ -60,11 +60,11 @@ def main() -> None:
     ho = HOLDOUT_DIR / "holdout.parquet"
     train.reset_index(drop=True).to_parquet(TRAIN, index=False)
     holdout.reset_index(drop=True).to_parquet(ho, index=False)
-    (HOLDOUT_DIR / "holdout.sha256").write_text(sha256(ho) + "\n")
+    (HOLDOUT_DIR / "holdout.sha256").write_text(sha256(ho) + "\n", encoding="utf-8")
 
     train_sha = sha256(TRAIN)
-    text = TASK_FILE.read_text()
-    TASK_FILE.write_text(re.sub(r"train_sha256: \S+", f"train_sha256: {train_sha}", text, count=1))
+    text = TASK_FILE.read_text(encoding="utf-8")
+    TASK_FILE.write_text(re.sub(r"train_sha256: \S+", f"train_sha256: {train_sha}", text, count=1), encoding="utf-8")
     print(f"train   {len(train):5d} строк, churn {train['churn'].mean():.3f}  sha256={train_sha}")
     print(f"holdout {len(holdout):5d} строк  sha256={sha256(ho)}")
     print(f"sha256 train вписан в {TASK_FILE}")

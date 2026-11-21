@@ -66,7 +66,7 @@ def train(config_sha: str, mode: str = "explore", code_dir: Path = CODE_DIR,
         code = tmp / "code" / "train"
         shutil.copytree(code_dir, code, ignore=shutil.ignore_patterns("__pycache__"))
         config = tmp / "config.yaml"
-        config.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
+        config.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
         out = tmp / "out"
 
         res = sandbox.run(
@@ -109,7 +109,7 @@ def train(config_sha: str, mode: str = "explore", code_dir: Path = CODE_DIR,
 
             # метрики на val заявлены кодом агента: берём только конечные числа
             try:
-                val = json.loads((out / "val_metrics.json").read_text())
+                val = json.loads((out / "val_metrics.json").read_text(encoding="utf-8"))
                 val = {f"val_{k}": float(v) for k, v in val.items()
                        if isinstance(v, (int, float)) and math.isfinite(v)}
             except (OSError, ValueError, AttributeError):

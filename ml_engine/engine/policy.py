@@ -17,7 +17,7 @@ POLICY = Path("policy.yaml")
 
 @lru_cache(maxsize=1)
 def load() -> dict:
-    return yaml.safe_load(POLICY.read_text())
+    return yaml.safe_load(POLICY.read_text(encoding="utf-8"))
 
 
 def protected_columns(columns: list[str]) -> list[str]:

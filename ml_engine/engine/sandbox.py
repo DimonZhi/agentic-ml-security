@@ -32,14 +32,14 @@ class Result:
 
 def image_id() -> str:
     r = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", IMAGE],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode == 0 and r.stdout.strip():
         return r.stdout.strip()
     # Docker Desktop с хранилищем containerd: inspect может не найти образ другой
     # платформы (например, собранный с --platform linux/amd64 на Apple Silicon),
     # хотя docker images его показывает
     listed = subprocess.run(["docker", "images", "--no-trunc", "--quiet", IMAGE],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
     ids = listed.stdout.split()
     if listed.returncode == 0 and ids:
         return ids[0]
@@ -67,6 +67,7 @@ def run(command: list[str], ro: dict[Path, str], out_dir: Path, timeout_sec: int
         "--cpus", CPUS,
         "--user", "10001:10001",
         "-e", "HOME=/tmp", "-e", "MPLCONFIGDIR=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1",
+        "-e", "PYTHONUTF8=1", "-e", "PYTHONIOENCODING=utf-8",
         "-w", "/work",
         "-v", f"{out_dir.resolve()}:/out:rw",
     ]
@@ -75,10 +76,11 @@ def run(command: list[str], ro: dict[Path, str], out_dir: Path, timeout_sec: int
     args += [IMAGE, *command]
 
     try:
-        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout_sec)
+        r = subprocess.run(args, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout_sec)
         return Result(r.returncode, (r.stdout + r.stderr)[-LOG_TAIL:], False)
     except subprocess.TimeoutExpired as e:
         subprocess.run(["docker", "kill", name], capture_output=True)
-        log = "".join(x.decode(errors="replace") if isinstance(x, bytes) else (x or "")
+        log = "".join(x.decode("utf-8", errors="replace") if isinstance(x, bytes) else (x or "")
                       for x in (e.stdout, e.stderr))
         return Result(-1, log[-LOG_TAIL:], True)

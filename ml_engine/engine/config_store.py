@@ -35,7 +35,7 @@ def approve(config_path: str, approved_by: str) -> str:
         "approved_by": approved_by,
         "approved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
-    (STORE / f"{sha}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2))
+    (STORE / f"{sha}.json").write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     return sha
 
 
@@ -47,4 +47,4 @@ def load_approved(sha: str) -> tuple[dict, dict]:
     data = cfg_path.read_bytes()
     if sha256_bytes(data) != sha:
         raise NotApproved(f"Копия конфига {sha} в хранилище изменена")
-    return yaml.safe_load(data), json.loads(rec_path.read_text())
+    return yaml.safe_load(data), json.loads(rec_path.read_text(encoding="utf-8"))

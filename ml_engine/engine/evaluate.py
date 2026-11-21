@@ -71,7 +71,7 @@ def compute_metrics(y_true, proba) -> dict:
 
 def read_proba(path: Path, n_rows: int) -> list[float]:
     """Вывод песочницы недоверенный: только список из n конечных чисел в [0, 1]."""
-    proba = json.loads(path.read_text())
+    proba = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(proba, list) or len(proba) != n_rows:
         raise ValueError("число предсказаний не совпадает с числом строк")
     for x in proba:
@@ -113,7 +113,7 @@ def evaluate(run_id: str) -> dict:
     if not holdout_path.exists():
         raise SystemExit(f"Нет отложенной выборки для задачи {cfg['task']['id']}: {holdout_path}")
     actual = hashlib.sha256(holdout_path.read_bytes()).hexdigest()
-    if actual != holdout_sha_path.read_text().strip():
+    if actual != holdout_sha_path.read_text(encoding="utf-8").strip():
         raise SystemExit(f"Отложенная выборка изменена: sha256 {actual}")
 
     if tags.get("mode") == "explore":
@@ -139,7 +139,7 @@ def evaluate(run_id: str) -> dict:
             raise Rejected("pickle_scan", bad)
 
         config = tmp / "config.yaml"
-        config.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
+        config.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
         data = tmp / "data"
         data.mkdir()
         plan_cols = feature_plan.input_columns(cfg)
@@ -152,7 +152,7 @@ def evaluate(run_id: str) -> dict:
         if res.returncode != 0:
             raise Rejected("inspect", [f"песочница inspect: {'timeout' if res.timed_out else 'ошибка'}"])
         try:
-            info = json.loads((tmp / "out_inspect" / "info.json").read_text())
+            info = json.loads((tmp / "out_inspect" / "info.json").read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
             raise Rejected("inspect", [f"некорректная сводка модели: {e}"])
         violations = check(info, cfg)
@@ -170,7 +170,7 @@ def evaluate(run_id: str) -> dict:
         if res.returncode != 0:
             raise Rejected("feature_plan", [f"песочница lineage: {'timeout' if res.timed_out else 'ошибка'}"])
         try:
-            lineage = json.loads((tmp / "out_lineage" / "lineage.json").read_text())
+            lineage = json.loads((tmp / "out_lineage" / "lineage.json").read_text(encoding="utf-8"))
             if not isinstance(lineage, dict) or not isinstance(lineage.get("deps"), dict):
                 raise ValueError("нет deps")
         except (OSError, ValueError) as e:

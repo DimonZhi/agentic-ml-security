@@ -36,7 +36,7 @@ def main() -> None:
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
-    cfg = yaml.safe_load(Path(args.config).read_text())
+    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
     label, ag = cfg["data"]["label"], cfg["automl"]
     out = Path(args.out)
 
@@ -65,7 +65,7 @@ def main() -> None:
     )
 
     val_scores = {k: float(v) for k, v in predictor.evaluate(val_df, silent=True).items()}
-    (out / "val_metrics.json").write_text(json.dumps(val_scores, indent=2))
+    (out / "val_metrics.json").write_text(json.dumps(val_scores, indent=2), encoding="utf-8")
     predictor.leaderboard(val_df, silent=True).to_csv(out / "leaderboard.csv", index=False)
     print(json.dumps({"n_train": len(train_df), "n_val": len(val_df), "val": val_scores}))
 

@@ -84,7 +84,7 @@ def main() -> None:
     if task_file.exists():
         raise SystemExit(f"Задача {a.task_id} уже есть: {task_file}")
     pol = policy.load()["intake"]
-    ticket = Path(a.ticket).read_text()
+    ticket = Path(a.ticket).read_text(encoding="utf-8")
     if len(ticket) > pol["max_ticket_chars"]:
         raise SystemExit(f"Тикет длиннее {pol['max_ticket_chars']} символов")
 
@@ -100,10 +100,10 @@ def main() -> None:
     ho_dir.mkdir(parents=True, exist_ok=True)
     train.reset_index(drop=True).to_parquet(train_path, index=False)
     holdout.reset_index(drop=True).to_parquet(ho_dir / "holdout.parquet", index=False)
-    (ho_dir / "holdout.sha256").write_text(sha256(ho_dir / "holdout.parquet") + "\n")
+    (ho_dir / "holdout.sha256").write_text(sha256(ho_dir / "holdout.parquet") + "\n", encoding="utf-8")
     ticket_path = Path("tickets") / f"{a.task_id}.md"
     ticket_path.parent.mkdir(exist_ok=True)
-    ticket_path.write_text(ticket)
+    ticket_path.write_text(ticket, encoding="utf-8")
 
     task = {
         "id": a.task_id,
@@ -116,7 +116,7 @@ def main() -> None:
         "mlflow": {"experiment": a.task_id},
     }
     task_file.parent.mkdir(exist_ok=True)
-    task_file.write_text(yaml.safe_dump(task, allow_unicode=True, sort_keys=False))
+    task_file.write_text(yaml.safe_dump(task, allow_unicode=True, sort_keys=False), encoding="utf-8")
     print(f"Задача {a.task_id}: train {len(train)} строк, отложенная выборка {len(holdout)} строк, "
           f"{df.shape[1]} колонок (константы убраны: {dropped or 'нет'})")
     print(f"Дальше: python -m agent.ds_agent --task {a.task_id}")
