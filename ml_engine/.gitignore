@@ -1,4 +1,4 @@
-data/
+data/*
 holdout/
 mlruns/
 mlartifacts/
@@ -11,3 +11,4 @@ workspaces/
 mlflow*.db
 .env
 tickets/
+!data/Telco_customer_churn.xlsx
