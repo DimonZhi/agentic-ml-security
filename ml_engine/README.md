@@ -172,6 +172,36 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db      # http://127.0.0.1:5000, 
 
 ## Другие сценарии
 
+### Своя задача из своих данных
+
+Задача создаётся командой `engine.intake` из файла с данными и текста тикета. Своё имя задачи (`--task-id`) пишется латиницей в нижнем регистре, с цифрами и дефисом, длиной 3–41 символ.
+
+1. Положи таблицу (csv, xlsx или parquet) в `data/`, например `data/my_data.csv`.
+2. Напиши тикет обычным текстом в файл, например `examples/ticket_my.txt`: что предсказываем, какая колонка показывает результат, что нельзя использовать. Образец: `examples/ticket_telco.txt`. Файл сохраняй в UTF-8.
+3. Из папки `ml_engine` запусти одной строкой (в Windows тоже):
+
+```bash
+python -m engine.intake --task-id my-task-001 --ticket examples/ticket_my.txt --data data/my_data.csv --by <кто заказчик>
+python -m agent.ds_agent --task my-task-001
+```
+
+Intake создаёт:
+
+| Файл | В git |
+|---|---|
+| `tasks/my-task-001.yaml`: постановка без таргета, путь к train и его `train_sha256` | да |
+| `data/my-task-001/train.parquet`: данные для агента | нет |
+| `holdout/my-task-001/`: отложенная выборка и её sha256 | нет |
+| `tickets/my-task-001.md`: копия тикета | нет |
+
+Данные, отложенная выборка и тикеты в git не попадают, поэтому на другом компьютере после `git pull` задача из `tasks/` есть, а её данных нет, и инструменты падают с `FileNotFoundError`. На каждом компьютере intake нужно запустить заново. Разбиение воспроизводится: seed задан в `policy.yaml`. Порядок:
+
+1. Убери старую постановку: `del tasks\my-task-001.yaml` в Windows или `rm tasks/my-task-001.yaml` на Mac. Intake не перезаписывает существующую задачу.
+2. Запусти ту же команду intake.
+3. Если `train_sha256` в новом yaml отличается от закоммиченного (другие версии pandas или pyarrow), конфиги, утверждённые на другом компьютере, не подойдут, и конфиг нужно утвердить заново. Такой yaml лучше не коммитить; вернуть версию из git можно командой `git checkout tasks/my-task-001.yaml`.
+
+Сами данные в git не кладутся. Исключение одно: `data/Telco_customer_churn.xlsx` (см. `.gitignore`), чтобы пример churn-002 можно было пересоздать на любом компьютере.
+
 ### Постановку пишет DS-человек
 
 Если таргет, запреты и пороги заранее известны, их можно задать вручную в `tasks/<имя>.yaml`. Тогда агент только следует постановке. Примеры: `tasks/credit_g.yaml` (German Credit) и `tasks/telco_churn.yaml`.
@@ -269,4 +299,8 @@ python -m engine.release --run-id <run_id>
 | агент остановился с `[infrastructure_error]` | причина напечатана строкой `[engine] SandboxError` выше; исправь и запусти с `--resume` |
 | `zsh: no such file or directory: sha` | вместо `<хэш>` подставь реальный хэш из вывода агента или из `ls proposals/` |
 | run `rejected` на `feature_plan` после обновления | конфиг утверждён до появления `outputs` в плане; запусти агента заново, он предложит новый |
+| `ошибка движка: FileNotFoundError` после `git pull` на другом компьютере | нет `data/`, `holdout/`, `tickets/` задачи (они не в git); пересоздай задачу через intake (раздел «Своя задача из своих данных») |
+| `Задача ... уже есть` при intake | удали `tasks/<имя>.yaml` и запусти intake заново |
+| `intake.py: error: argument --data: expected one argument` | команда обрезалась при вставке; вставь её одной строкой |
+| русский текст искажён, `UnicodeDecodeError` в Windows | код читает и пишет файлы в UTF-8; сохраняй тикеты и конфиги в UTF-8 |
 | в MLflow UI нет run | переключись на вкладку Model training (GenAI это трейсы) |
